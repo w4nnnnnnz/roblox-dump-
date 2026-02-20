@@ -16,10 +16,11 @@ body {
     color: #333;
 }
 
-/* SECTION */
 section {
     padding: 80px 20px;
     text-align: center;
+    position: relative;
+    z-index: 1;
 }
 
 .romantic-text {
@@ -32,7 +33,7 @@ section {
     border-radius: 20px;
 }
 
-/* MUSIC BUTTON */
+/* Tombol Musik */
 .music-btn {
     padding: 12px 25px;
     background: #ff4d6d;
@@ -44,15 +45,19 @@ section {
     margin-top: 20px;
 }
 
-/* GALLERY */
+/* Gallery */
 .gallery {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
+    padding: 10px;
 }
 
-@media(min-width:768px){
-    .gallery { grid-template-columns: repeat(4,1fr); }
+@media(min-width: 768px){
+    .gallery {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+    }
 }
 
 .gallery img {
@@ -61,23 +66,24 @@ section {
     object-fit: cover;
     border-radius: 18px;
     cursor: pointer;
-    transition: .3s;
+    transition: 0.3s;
 }
 
-.gallery img:hover { transform: scale(1.05); }
+.gallery img:hover {
+    transform: scale(1.05);
+}
 
 /* LIGHTBOX */
 .lightbox {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.9);
-    backdrop-filter: blur(12px);
+    background: rgba(0,0,0,0.95);
     display: flex;
     justify-content: center;
     align-items: center;
     opacity: 0;
     visibility: hidden;
-    transition: .4s ease;
+    transition: 0.3s;
     z-index: 9999;
 }
 
@@ -86,39 +92,15 @@ section {
     visibility: visible;
 }
 
-/* Slider */
-.slider-container {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    transition: transform .4s ease;
-    animation: zoomIn .5s ease;
-}
-
-.slider-container img {
-    border-radius: 20px;
+.lightbox img {
+    max-width: 90%;
+    max-height: 85%;
+    border-radius: 15px;
     cursor: pointer;
-    transition: .4s ease;
+    transition: transform 0.5s cubic-bezier(.4,0,.2,1), opacity 0.5s;
 }
 
-.slider-container img.active {
-    width: 300px;
-    transform: scale(1);
-    opacity: 1;
-    z-index: 2;
-}
-
-.slider-container img.side {
-    width: 180px;
-    opacity: .6;
-    transform: scale(.85);
-}
-
-@keyframes zoomIn {
-    from { transform: scale(.8); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
+/* Close */
 .close-btn {
     position: absolute;
     top: 20px;
@@ -128,12 +110,28 @@ section {
     cursor: pointer;
 }
 
-/* Hearts */
+/* Arrow */
+.arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 40px;
+    color: white;
+    cursor: pointer;
+    padding: 10px;
+    user-select: none;
+}
+
+.arrow.left { left: 20px; }
+.arrow.right { right: 20px; }
+
+/* Hati */
 .heart {
     position: fixed;
     top: -10px;
     font-size: 20px;
     pointer-events: none;
+    z-index: 0;
     animation: fall linear forwards;
 }
 
@@ -151,9 +149,12 @@ section {
 <section>
 <h1>Untuk Kamu 💕</h1>
 <div class="romantic-text">
-Semua foto ini adalah cerita tentang kita.
-Dan aku ingin terus membuat cerita baru bersamamu.
+Semua foto di halaman ini adalah cerita tentang kita.
+Setiap momen yang tertangkap kamera,
+adalah bagian kecil dari kenangan besar
+yang selalu ingin ku jaga.
 </div>
+
 <button class="music-btn" onclick="toggleMusic()" id="musicButton">
 ▶️ Putar Musik
 </button>
@@ -168,31 +169,35 @@ Dan aku ingin terus membuat cerita baru bersamamu.
 <source src="musik.mp3" type="audio/mpeg">
 </audio>
 
+<!-- LIGHTBOX -->
 <div class="lightbox" id="lightbox">
 <span class="close-btn" onclick="closeLightbox()">✖</span>
-<div class="slider-container" id="slider"></div>
+<span class="arrow left" onclick="prevImage()">❮</span>
+<img id="lightbox-img">
+<span class="arrow right" onclick="nextImage()">❯</span>
 </div>
 
 <script>
 const gallery = document.getElementById("gallery");
 const lightbox = document.getElementById("lightbox");
-const slider = document.getElementById("slider");
+const lightboxImg = document.getElementById("lightbox-img");
 
 let currentIndex = 0;
 const totalImages = 20;
+let startX = 0;
 
-/* Generate Gallery */
-for(let i=1;i<=totalImages;i++){
-    const img=document.createElement("img");
-    img.src="foto/foto"+i+".jpg";
-    img.loading="lazy";
-    img.onclick=()=>openLightbox(i-1);
+/* Generate Foto */
+for(let i = 1; i <= totalImages; i++){
+    const img = document.createElement("img");
+    img.src = "foto/foto" + i + ".jpg";
+    img.loading = "lazy";
+    img.onclick = () => openLightbox(i-1);
     gallery.appendChild(img);
 }
 
 function openLightbox(index){
-    currentIndex=index;
-    updateSlider();
+    currentIndex = index;
+    updateImage();
     lightbox.classList.add("active");
 }
 
@@ -200,87 +205,90 @@ function closeLightbox(){
     lightbox.classList.remove("active");
 }
 
-function updateSlider(){
-    slider.innerHTML="";
-
-    const prev=(currentIndex-1+totalImages)%totalImages;
-    const next=(currentIndex+1)%totalImages;
-
-    const prevImg=createImg(prev,"side");
-    const mainImg=createImg(currentIndex,"active");
-    const nextImg=createImg(next,"side");
-
-    slider.appendChild(prevImg);
-    slider.appendChild(mainImg);
-    slider.appendChild(nextImg);
+function updateImage(){
+    lightboxImg.src = "foto/foto" + (currentIndex+1) + ".jpg";
 }
 
-function createImg(index,type){
-    const img=document.createElement("img");
-    img.src="foto/foto"+(index+1)+".jpg";
-    img.classList.add(type);
+/* ANIMASI SLIDE */
+function animateSlide(direction){
+    lightboxImg.style.opacity = 0;
+    lightboxImg.style.transform = direction === "next" 
+        ? "translateX(-40px)" 
+        : "translateX(40px)";
 
-    img.onclick=()=>{
-        if(type==="side"){
-            currentIndex=index;
-            updateSlider();
+    setTimeout(() => {
+        if(direction === "next"){
+            currentIndex = (currentIndex + 1) % totalImages;
+        } else {
+            currentIndex = (currentIndex - 1 + totalImages) % totalImages;
         }
-    };
-    return img;
+
+        updateImage();
+
+        lightboxImg.style.transform = direction === "next" 
+            ? "translateX(40px)" 
+            : "translateX(-40px)";
+
+        setTimeout(() => {
+            lightboxImg.style.opacity = 1;
+            lightboxImg.style.transform = "translateX(0)";
+        }, 50);
+
+    }, 200);
 }
 
-/* ===== SWIPE SUPPORT HP ===== */
-let startX = 0;
-let isDragging = false;
+function nextImage(){
+    animateSlide("next");
+}
 
-slider.addEventListener("touchstart", e=>{
+function prevImage(){
+    animateSlide("prev");
+}
+
+/* Klik gambar = next */
+lightboxImg.onclick = nextImage;
+
+/* Swipe Support */
+lightboxImg.addEventListener("touchstart", e=>{
     startX = e.touches[0].clientX;
-    isDragging = true;
 });
 
-slider.addEventListener("touchend", e=>{
-    if(!isDragging) return;
-    isDragging = false;
-
+lightboxImg.addEventListener("touchend", e=>{
     let endX = e.changedTouches[0].clientX;
-    let diff = endX - startX;
-
-    if(diff < -50){
-        currentIndex = (currentIndex + 1) % totalImages;
+    if(startX - endX > 50){
+        nextImage();
+    } else if(endX - startX > 50){
+        prevImage();
     }
-    else if(diff > 50){
-        currentIndex = (currentIndex - 1 + totalImages) % totalImages;
-    }
-
-    updateSlider();
 });
 
 /* MUSIC */
-const music=document.getElementById("bgMusic");
-const button=document.getElementById("musicButton");
+const music = document.getElementById("bgMusic");
+const button = document.getElementById("musicButton");
 
 function toggleMusic(){
     if(music.paused){
         music.play();
-        button.innerHTML="⏸ Pause Musik";
-    }else{
+        button.innerHTML = "⏸ Pause Musik";
+    } else {
         music.pause();
-        button.innerHTML="▶️ Putar Musik";
+        button.innerHTML = "▶️ Putar Musik";
     }
 }
 
-/* Hearts */
+/* Efek Hati (lebih ringan) */
 function createHeart(){
-    const heart=document.createElement("div");
+    const heart = document.createElement("div");
     heart.classList.add("heart");
-    heart.innerHTML=["💖","💗","💘","❤️"][Math.floor(Math.random()*4)];
-    heart.style.left=Math.random()*100+"vw";
-    heart.style.animationDuration=(4+Math.random()*2)+"s";
-    heart.style.fontSize=(15+Math.random()*20)+"px";
+    heart.innerHTML = ["💖","💗","💘","❤️"][Math.floor(Math.random()*4)];
+    heart.style.left = Math.random()*100 + "vw";
+    heart.style.animationDuration = (4+Math.random()*2)+"s";
+    heart.style.fontSize = (15+Math.random()*20)+"px";
     document.body.appendChild(heart);
     setTimeout(()=>heart.remove(),6000);
 }
-setInterval(createHeart,900);
+
+setInterval(createHeart,800);
 </script>
 
 </body>
