@@ -16,7 +16,7 @@ body {
     color: #333;
 }
 
-/* ===== SECTION ===== */
+/* SECTION */
 section {
     padding: 80px 20px;
     text-align: center;
@@ -32,7 +32,7 @@ section {
     border-radius: 20px;
 }
 
-/* ===== MUSIC BUTTON ===== */
+/* MUSIC BUTTON */
 .music-btn {
     padding: 12px 25px;
     background: #ff4d6d;
@@ -44,7 +44,7 @@ section {
     margin-top: 20px;
 }
 
-/* ===== GALLERY ===== */
+/* GALLERY */
 .gallery {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -66,7 +66,7 @@ section {
 
 .gallery img:hover { transform: scale(1.05); }
 
-/* ===== LIGHTBOX ===== */
+/* LIGHTBOX */
 .lightbox {
     position: fixed;
     inset: 0;
@@ -86,23 +86,21 @@ section {
     visibility: visible;
 }
 
-/* Container */
+/* Slider */
 .slider-container {
     display: flex;
     align-items: center;
     gap: 20px;
-    transition: transform .6s cubic-bezier(.22,.61,.36,1);
+    transition: transform .4s ease;
     animation: zoomIn .5s ease;
 }
 
-/* Images */
 .slider-container img {
     border-radius: 20px;
     cursor: pointer;
-    transition: .5s cubic-bezier(.22,.61,.36,1);
+    transition: .4s ease;
 }
 
-/* Center image */
 .slider-container img.active {
     width: 300px;
     transform: scale(1);
@@ -110,20 +108,17 @@ section {
     z-index: 2;
 }
 
-/* Side preview */
 .slider-container img.side {
     width: 180px;
     opacity: .6;
     transform: scale(.85);
 }
 
-/* Zoom animation */
 @keyframes zoomIn {
     from { transform: scale(.8); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
 }
 
-/* Close */
 .close-btn {
     position: absolute;
     top: 20px;
@@ -228,15 +223,37 @@ function createImg(index,type){
     img.onclick=()=>{
         if(type==="side"){
             currentIndex=index;
-            slider.style.transform="translateX(50px)";
-            setTimeout(()=>{
-                slider.style.transform="translateX(0)";
-                updateSlider();
-            },150);
+            updateSlider();
         }
     };
     return img;
 }
+
+/* ===== SWIPE SUPPORT HP ===== */
+let startX = 0;
+let isDragging = false;
+
+slider.addEventListener("touchstart", e=>{
+    startX = e.touches[0].clientX;
+    isDragging = true;
+});
+
+slider.addEventListener("touchend", e=>{
+    if(!isDragging) return;
+    isDragging = false;
+
+    let endX = e.changedTouches[0].clientX;
+    let diff = endX - startX;
+
+    if(diff < -50){
+        currentIndex = (currentIndex + 1) % totalImages;
+    }
+    else if(diff > 50){
+        currentIndex = (currentIndex - 1 + totalImages) % totalImages;
+    }
+
+    updateSlider();
+});
 
 /* MUSIC */
 const music=document.getElementById("bgMusic");
