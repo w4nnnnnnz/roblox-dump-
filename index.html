@@ -35,14 +35,18 @@ section {
 
 /* Tombol Musik */
 .music-btn {
-    padding: 12px 25px;
+    padding: 10px 20px;
     background: #ff4d6d;
     color: white;
     border: none;
     border-radius: 30px;
     cursor: pointer;
-    font-size: 15px;
-    margin-top: 20px;
+    font-size: 14px;
+    margin: 5px;
+}
+
+input[type="range"]{
+    width:200px;
 }
 
 /* Gallery */
@@ -100,7 +104,6 @@ section {
     transition: transform 0.5s cubic-bezier(.4,0,.2,1), opacity 0.5s;
 }
 
-/* Close */
 .close-btn {
     position: absolute;
     top: 20px;
@@ -110,7 +113,6 @@ section {
     cursor: pointer;
 }
 
-/* Arrow */
 .arrow {
     position: absolute;
     top: 50%;
@@ -148,6 +150,7 @@ section {
 
 <section>
 <h1>Untuk Kamu 💕</h1>
+
 <div class="romantic-text">
 Semua foto di halaman ini adalah cerita tentang kita.
 Setiap momen yang tertangkap kamera,
@@ -155,9 +158,21 @@ adalah bagian kecil dari kenangan besar
 yang selalu ingin ku jaga.
 </div>
 
+<br>
+
 <button class="music-btn" onclick="toggleMusic()" id="musicButton">
 ▶️ Putar Musik
 </button>
+
+<br><br>
+
+<button class="music-btn" onclick="prevSong()">⏮ Prev</button>
+<button class="music-btn" onclick="nextSong()">⏭ Next</button>
+
+<br><br>
+
+<input type="range" id="volumeControl" min="0" max="1" step="0.05" value="0.5">
+
 </section>
 
 <section>
@@ -165,9 +180,7 @@ yang selalu ingin ku jaga.
 <div class="gallery" id="gallery"></div>
 </section>
 
-<audio id="bgMusic" loop>
-<source src="musik.mp3" type="audio/mpeg">
-</audio>
+<audio id="bgMusic"></audio>
 
 <!-- LIGHTBOX -->
 <div class="lightbox" id="lightbox">
@@ -178,6 +191,10 @@ yang selalu ingin ku jaga.
 </div>
 
 <script>
+
+/* ======================
+   GALLERY
+====================== */
 const gallery = document.getElementById("gallery");
 const lightbox = document.getElementById("lightbox");
 const lightboxImg = document.getElementById("lightbox-img");
@@ -186,7 +203,6 @@ let currentIndex = 0;
 const totalImages = 24;
 let startX = 0;
 
-/* Generate Foto */
 for(let i = 1; i <= totalImages; i++){
     const img = document.createElement("img");
     img.src = "foto/foto" + i + ".jpg";
@@ -209,12 +225,8 @@ function updateImage(){
     lightboxImg.src = "foto/foto" + (currentIndex+1) + ".jpg";
 }
 
-/* ANIMASI SLIDE */
 function animateSlide(direction){
     lightboxImg.style.opacity = 0;
-    lightboxImg.style.transform = direction === "next" 
-        ? "translateX(-40px)" 
-        : "translateX(40px)";
 
     setTimeout(() => {
         if(direction === "next"){
@@ -222,49 +234,44 @@ function animateSlide(direction){
         } else {
             currentIndex = (currentIndex - 1 + totalImages) % totalImages;
         }
-
         updateImage();
-
-        lightboxImg.style.transform = direction === "next" 
-            ? "translateX(40px)" 
-            : "translateX(-40px)";
-
-        setTimeout(() => {
-            lightboxImg.style.opacity = 1;
-            lightboxImg.style.transform = "translateX(0)";
-        }, 50);
-
-    }, 200);
+        lightboxImg.style.opacity = 1;
+    },200);
 }
 
-function nextImage(){
-    animateSlide("next");
-}
+function nextImage(){ animateSlide("next"); }
+function prevImage(){ animateSlide("prev"); }
 
-function prevImage(){
-    animateSlide("prev");
-}
-
-/* Klik gambar = next */
 lightboxImg.onclick = nextImage;
 
-/* Swipe Support */
 lightboxImg.addEventListener("touchstart", e=>{
     startX = e.touches[0].clientX;
 });
 
 lightboxImg.addEventListener("touchend", e=>{
     let endX = e.changedTouches[0].clientX;
-    if(startX - endX > 50){
-        nextImage();
-    } else if(endX - startX > 50){
-        prevImage();
-    }
+    if(startX - endX > 50) nextImage();
+    else if(endX - startX > 50) prevImage();
 });
 
-/* MUSIC */
+/* ======================
+   MUSIC SYSTEM
+====================== */
+
 const music = document.getElementById("bgMusic");
 const button = document.getElementById("musicButton");
+const volumeControl = document.getElementById("volumeControl");
+
+const playlist = [
+    "musik/musik1.mp3",
+    "musik/musik2.mp3",
+    "musik/musik3.mp3"
+];
+
+let currentSong = 0;
+
+music.src = playlist[currentSong];
+music.volume = 0.5;
 
 function toggleMusic(){
     if(music.paused){
@@ -276,7 +283,28 @@ function toggleMusic(){
     }
 }
 
-/* Efek Hati (lebih ringan) */
+function nextSong(){
+    currentSong = (currentSong + 1) % playlist.length;
+    music.src = playlist[currentSong];
+    music.play();
+}
+
+function prevSong(){
+    currentSong = (currentSong - 1 + playlist.length) % playlist.length;
+    music.src = playlist[currentSong];
+    music.play();
+}
+
+volumeControl.addEventListener("input", function(){
+    music.volume = this.value;
+});
+
+music.addEventListener("ended", nextSong);
+
+/* ======================
+   HEART EFFECT
+====================== */
+
 function createHeart(){
     const heart = document.createElement("div");
     heart.classList.add("heart");
@@ -289,8 +317,8 @@ function createHeart(){
 }
 
 setInterval(createHeart,2000);
+
 </script>
 
 </body>
 </html>
-
